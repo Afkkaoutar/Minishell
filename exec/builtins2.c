@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/30 00:04:49 by kaafkhar          #+#    #+#             */
-/*   Updated: 2024/10/13 05:47:28 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/13 22:56:05 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ void exec_unset(t_env **env, const char *var_name)
 {
     if (var_name == NULL)
         return;
-    printf("Tentative de suppression de la variable: %s\n", var_name);
+    // printf("Tentative de suppression de la variable: %s\n", var_name);
     delete_node(env, var_name);
 }
 
@@ -67,47 +67,38 @@ void ft_export(t_args *args, char **cmd, t_env **env)
 {
     (void)args;
     int i = 1;
-    int j = 0;
 
     if (cmd[1] == NULL) 
     {
-        extern char **environ; 
-        while (environ[j] != NULL)
+        t_env *current = *env;
+        while (current)
         {
-            char *equal_sign = ft_strchr(environ[j], '=');
-            if (equal_sign)
+            if (current->value)
             {
-                *equal_sign = '\0';
-                printf("declare -x %s=\"%s\"\n", environ[j], equal_sign + 1);
-                *equal_sign = '=';
+                printf("declare -x %s=\"%s\"\n", current->var, current->value);
             }
             else
             {
-                printf("declare -x %s\n", environ[j]);
+                printf("declare -x %s\n", current->var);
             }
-            j++;
+            current = current->next;
         }
         return;
     }
 
-    while (cmd[i])
+    while (cmd[i] != NULL)
     {
         char *equal_sign = ft_strchr(cmd[i], '=');
-        if (equal_sign == NULL)
+        if (equal_sign)
         {
-            ft_putstr_fd("minishell: export: `", 2);
-            ft_putstr_fd(cmd[i], 2);
-            ft_putendl_fd("': not a valid identifier", 2);
-            return;
+            *equal_sign = '\0';
+            add_to_env_list(env, cmd[i], equal_sign + 1); // Utilise la valeur après '='
+            *equal_sign = '='; // Rétablit le caractère '='
         }
-
-        *equal_sign = '\0';
-        const char *var_name = cmd[i];
-        const char *var_value = equal_sign + 1;
-
-        add_to_env_list(env, var_name, var_value);
-
-        *equal_sign = '=';
+        else
+        {
+            add_to_env_list(env, cmd[i], NULL); // Ajoute une variable d'environnement sans valeur
+        }
         i++;
     }
 }

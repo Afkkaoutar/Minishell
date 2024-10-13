@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/16 19:09:51 by youssra           #+#    #+#             */
-/*   Updated: 2024/10/13 05:37:15 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/13 23:10:15 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,12 +126,12 @@ void ft_limadd_back(t_lim **lst, t_lim *new);
 // builtins
 int exec_builtin(t_args *args, t_cmd_tab *cmd);
 void echo(t_args *args, t_cmd_tab *cmd);
-int cd(t_cmd_tab *cmd, t_env *env);
+int exec_cd(t_cmd_tab *cmd, t_env *env);
 int pwd(t_args *arg, char **cmd);
 void ft_export(t_args *args, char **cmd, t_env **env);
 void exec_exit(t_args *args, t_cmd_tab *cmd);
 void exec_env(t_cmd_tab *cmd, t_env *env); 
-void exec_unset(t_env **env, char **args);
+void exec_unset(t_env **env, const char *var_name);
 
 // exec
 int execute_cmds(t_args *args);
@@ -144,10 +144,14 @@ int ft_strcmp(const char *s1, const char *s2);
 int is_num(char *str);
 void add_to_env_list(t_env **env, const char *var_name, const char *var_value);
 char	**lst_to_array(t_list *lst);
-char *path(t_env *env, const char *var_name);
+char *get_path(t_env *env, char *name);
 
 
 void delete_node(t_env **head, const char *key);
-int check_is_env(char *enve, t_env *env);
+
+//signals
+void sigint_handler(int signum);
+void sigquit_handler(int signum);
+void setup_signal_handlers();
 
 #endif

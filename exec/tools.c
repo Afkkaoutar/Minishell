@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/25 19:03:41 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/13 05:10:37 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/13 22:43:18 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,22 +55,25 @@ int is_num(char *str)
 }
 
 
-char *path(t_env *env, const char *var_name)
+char *get_path(t_env *env, char *name)
 {
+    char *tmp;
     t_env *current = env;
-    size_t var_len = ft_strlen(var_name);
 
     while (current)
     {
-        char *env_var = current->value;
-        if (ft_strncmp(env_var, var_name, var_len) == 0 && env_var[var_len] == '=')
+        if (ft_strcmp(current->var, name) == 0)
         {
-            return (env_var + var_len + 1);
+            tmp = current->value;
+            if (tmp)
+                return (ft_strdup(tmp));
         }
         current = current->next;
-	}
+    }
     return NULL;
 }
+
+
 
 void add_to_env_list(t_env **env, const char *var_name, const char *var_value)
 {

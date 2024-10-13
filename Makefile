@@ -6,7 +6,7 @@
 #    By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/17 00:25:27 by youssra           #+#    #+#              #
-#    Updated: 2024/10/13 03:47:40 by kaafkhar         ###   ########.fr        #
+#    Updated: 2024/10/13 23:11:49 by kaafkhar         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -36,6 +36,8 @@ SRCS		=	parse/main.c \
 				exec/builtins.c \
 				exec/builtins2.c \
 				exec/exuc_built.c \
+				exec/signals.c \
+				
 
 OBJS		= $(SRCS:.c=.o)
 
