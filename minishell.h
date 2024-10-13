@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/16 19:09:51 by youssra           #+#    #+#             */
-/*   Updated: 2024/10/09 19:32:15 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/13 05:37:15 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,7 @@ int pwd(t_args *arg, char **cmd);
 void ft_export(t_args *args, char **cmd, t_env **env);
 void exec_exit(t_args *args, t_cmd_tab *cmd);
 void exec_env(t_cmd_tab *cmd, t_env *env); 
-void exec_unset(t_env **env, const char *var_name);
+void exec_unset(t_env **env, char **args);
 
 // exec
 int execute_cmds(t_args *args);
@@ -144,6 +144,10 @@ int ft_strcmp(const char *s1, const char *s2);
 int is_num(char *str);
 void add_to_env_list(t_env **env, const char *var_name, const char *var_value);
 char	**lst_to_array(t_list *lst);
-char *path(t_list *env, const char *var_name);
+char *path(t_env *env, const char *var_name);
+
+
+void delete_node(t_env **head, const char *key);
+int check_is_env(char *enve, t_env *env);
 
 #endif

@@ -6,18 +6,15 @@
 #    By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/17 00:25:27 by youssra           #+#    #+#              #
-#    Updated: 2024/09/30 03:41:05 by kaafkhar         ###   ########.fr        #
+#    Updated: 2024/10/13 03:47:40 by kaafkhar         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME 		=	minishell
 CC			=	cc
 
-CFLAGS		=	-g -Wall -Wextra -Werror 
-# -fsanitize=address
-#-Werror
-
-LFLAGS 		=	"-L$(shell brew --prefix readline)/lib"
+CFLAGS		=	-g -Wall -Wextra -Werror -I./ -I./lib/Libft
+LFLAGS 		=	-L$(shell brew --prefix readline)/lib
 
 HEADER		=	minishell.h
 
@@ -48,10 +45,10 @@ lib :
 	make -C lib
 
 $(NAME) : $(OBJS) lib
-	$(CC)  $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) -lreadline $(LFLAGS)
+	$(CC) $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) -lreadline $(LFLAGS)
 
 %.o: %.c $(HEADER)
-		$(CC)  $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	make clean -C lib
@@ -62,7 +59,6 @@ fclean:	clean
 	rm -rf $(NAME)
 
 re: fclean all
-
 
 push: fclean
 	git add .

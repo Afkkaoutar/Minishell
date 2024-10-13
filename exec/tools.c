@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/25 19:03:41 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/09 19:34:08 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/13 05:10:37 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,27 +29,6 @@ int	check_files(t_args *args, char *filename, int flag)
 	else if (err == 1)
 		return (put_error(args, PERMISSION, filename), 1);
 	return (0);
-}
-
-char	**lst_to_array(t_list *lst)
-{
-	int		i;
-	int		len;
-	char	**arr;
-	t_list	*tmp;
-
-	tmp = lst;
-	i = 0;
-	len = ft_lstsize(tmp);
-	arr = malloc((len + 1) * sizeof(char *));
-	while (tmp)
-	{
-		arr[i] = ft_strdup(tmp->content);
-		i++;
-		tmp = tmp->next;
-	}
-	arr[i] = NULL;
-	return (arr);
 }
 
 int ft_strcmp(const char *s1, const char *s2)
@@ -75,19 +54,49 @@ int is_num(char *str)
     return (1);
 }
 
-char *path(t_list *env, const char *var_name)
+
+char *path(t_env *env, const char *var_name)
 {
-    t_list *current = env;
+    t_env *current = env;
     size_t var_len = ft_strlen(var_name);
 
     while (current)
     {
-        char *env_var = (char *)current->content;
+        char *env_var = current->value;
         if (ft_strncmp(env_var, var_name, var_len) == 0 && env_var[var_len] == '=')
         {
             return (env_var + var_len + 1);
         }
         current = current->next;
-    }
+	}
     return NULL;
+}
+
+void add_to_env_list(t_env **env, const char *var_name, const char *var_value)
+{
+    t_env *current = *env;
+    t_env *new_node = NULL;
+
+    while (current != NULL)
+    {
+        if (ft_strcmp(current->var, var_name) == 0)
+        {
+            free(current->value);
+            current->value = ft_strdup(var_value);
+            return;
+        }
+        current = current->next;
+    }
+
+    new_node = malloc(sizeof(t_env));
+    if (!new_node)
+    {
+        perror("malloc");
+        return;
+    }
+    
+    new_node->var = ft_strdup(var_name);
+    new_node->value = ft_strdup(var_value);
+    new_node->next = *env;
+    *env = new_node;
 }

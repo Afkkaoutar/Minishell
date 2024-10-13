@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/13 22:11:48 by kaafkhar          #+#    #+#             */
-/*   Updated: 2024/10/09 19:16:10 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/13 05:40:44 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 int exec_builtin(t_args *args, t_cmd_tab *cmd)
 {
-    printf("test :: %s\n", cmd->cmd[0]);
+    // printf("test :: %s\n", cmd->cmd[0]);
     
     if (ft_strcmp(cmd->cmd[0], "echo") == 0)
         echo(args, cmd);
@@ -28,8 +28,14 @@ int exec_builtin(t_args *args, t_cmd_tab *cmd)
         exec_exit(args, cmd);
     else if (ft_strcmp(cmd->cmd[0], "env") == 0)
         exec_env(cmd, args->env);
-    else if (ft_strcmp(cmd->cmd[0], "unset") == 0)
-        exec_unset(&args->env, cmd->cmd[1]);
+    else if (ft_strcmp(cmd->cmd[0], "unset") == 0) 
+   {
+    if (cmd->cmd[1]) { // Vérifie si un argument est passé
+        exec_unset(&args->env, &cmd->cmd[1]);
+    }
+}
+
+
     else 
         return 0; 
     return 1;

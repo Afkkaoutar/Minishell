@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/30 00:04:49 by kaafkhar          #+#    #+#             */
-/*   Updated: 2024/10/08 18:05:30 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/13 05:47:28 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,33 +24,44 @@ int own_strchr(char *str, char c)
     return -1;
 }
 
-void exec_unset(t_env **env, const char *var_name)
+void delete_node(t_env **head, const char *key)
 {
+    t_env *current = *head;
     t_env *prev = NULL;
-    t_env *current = *env;
 
-    while (current)
+    if (current != NULL && strcmp(current->var, key) == 0)
     {
-        if (ft_strcmp(current->var, var_name) == 0)
-        {
-            if (prev == NULL)
-            {
-                *env = current->next;
-            }
-            else
-            {
-                prev->next = current->next;
-            }
-            free(current->var);
-            free(current->value);
-            free(current);
-            return;
-        }
+        *head = current->next;
+        free(current->var);
+        free(current->value);
+        free(current);
+        printf("La variable \"%s\" a été supprimée de l'environnement.\n", key);
+        return;
+    }
+    while (current != NULL && strcmp(current->var, key) != 0)
+    {
         prev = current;
         current = current->next;
     }
+    if (current == NULL)
+    {
+        printf("Node with key \"%s\" not found in the list.\n", key);
+        return;
+    }
+    prev->next = current->next;
+    free(current->var);
+    free(current->value);
+    free(current);
+    printf("La variable \"%s\" a été supprimée de l'environnement.\n", key);
 }
 
+void exec_unset(t_env **env, const char *var_name)
+{
+    if (var_name == NULL)
+        return;
+    printf("Tentative de suppression de la variable: %s\n", var_name);
+    delete_node(env, var_name);
+}
 
 void ft_export(t_args *args, char **cmd, t_env **env)
 {
@@ -94,14 +105,9 @@ void ft_export(t_args *args, char **cmd, t_env **env)
         const char *var_name = cmd[i];
         const char *var_value = equal_sign + 1;
 
-        if (setenv(var_name, var_value, 1) == -1)
-        {
-            perror("setenv");
-            return; 
-        }
+        add_to_env_list(env, var_name, var_value);
 
         *equal_sign = '=';
-        add_to_env_list(env, var_name, var_value);
         i++;
     }
 }
