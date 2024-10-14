@@ -6,14 +6,11 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 05:36:15 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/09 18:55:45 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/14 05:10:17 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../minishell.h"
-
-#include <stdlib.h>
-#include <string.h>
 
 void free_array(char **str)
 {
@@ -60,8 +57,28 @@ void free_list(t_list **list)
     {
         temp = *list;
         *list = (*list)->next;
-        del_env(temp->content);
+
+        if (temp->content)      
+             del_env(temp->content);
+
         free(temp);
+    }
+}
+
+
+void free_delimiters(t_lim **lst)
+{
+    t_lim *tmp;
+
+    if (!lst || !*lst)
+        return;
+    while (*lst)
+    {
+        tmp = *lst;
+        *lst = tmp->next;
+        if (tmp->content)
+            free(tmp->content);
+        free(tmp);
     }
 }
 
@@ -85,6 +102,8 @@ void free_table(t_cmd_tab **table)
             free(tmp->out);
         if (tmp->append)
             free(tmp->append);
+        if (tmp->delimiter)
+            free_delimiters(&tmp->delimiter);
         free(tmp);
     }
 }

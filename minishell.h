@@ -6,22 +6,24 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/16 19:09:51 by youssra           #+#    #+#             */
-/*   Updated: 2024/10/13 23:10:15 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/14 02:47:09 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
+# include <stdio.h>
 # include <readline/readline.h>
 # include <readline/history.h>
 # include "lib/Libft/libft.h"
+# include <sys/types.h>
+# include <sys/stat.h>
 # include "header.h"
 # include <fcntl.h>
 # include <stdbool.h>
 # include <termios.h>
 # include <signal.h>
-# include <stdio.h>
 # include <string.h> 
 # include <stdlib.h> 
 
@@ -106,6 +108,7 @@ void free_tokens(t_token **lst);
 void free_table(t_cmd_tab **table);
 void free_list(t_list **list);
 void del_env(void *content);
+void free_delimiters(t_lim **lst);
 
 void put_error(t_args *cmd_line, char *msg, char *name);
 char *expand(char *word, t_type type);

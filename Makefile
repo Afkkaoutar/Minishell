@@ -6,15 +6,15 @@
 #    By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/17 00:25:27 by youssra           #+#    #+#              #
-#    Updated: 2024/10/13 23:11:49 by kaafkhar         ###   ########.fr        #
+#    Updated: 2024/10/13 23:43:11 by kaafkhar         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME 		=	minishell
 CC			=	cc
 
-CFLAGS		=	-g -Wall -Wextra -Werror -I./ -I./lib/Libft
-LFLAGS 		=	-L$(shell brew --prefix readline)/lib
+CFLAGS		=	-g -Wall -Wextra -Werror -I./ -I./lib/Libft -I$(shell brew --prefix readline)/include
+LIBS 		= -L$(shell brew --prefix readline)/lib -lreadline
 
 HEADER		=	minishell.h
 
@@ -36,8 +36,7 @@ SRCS		=	parse/main.c \
 				exec/builtins.c \
 				exec/builtins2.c \
 				exec/exuc_built.c \
-				exec/signals.c \
-				
+				exec/signals.c
 
 OBJS		= $(SRCS:.c=.o)
 
@@ -46,8 +45,8 @@ all : $(NAME)
 lib :
 	make -C lib
 
-$(NAME) : $(OBJS) lib
-	$(CC) $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) -lreadline $(LFLAGS)
+$(NAME): $(OBJS) lib
+	$(CC) $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) $(LIBS)
 
 %.o: %.c $(HEADER)
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -6,7 +6,7 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 00:25:05 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/13 23:09:17 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/14 05:13:58 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@
 int g_errno = 0;
 
 
+#include "minishell.h"
 
 int main(int ac, char **av, char **env)
 {
@@ -115,7 +116,5 @@ int main(int ac, char **av, char **env)
         while (wait(0) != -1)
             continue;
     }
-
-    free_struct(&cmd_line);
     return 0;
 }
