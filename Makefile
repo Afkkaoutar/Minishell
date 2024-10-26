@@ -1,30 +1,25 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/07/17 00:25:27 by youssra           #+#    #+#              #
-#    Updated: 2024/10/13 23:43:11 by kaafkhar         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
 
 NAME 		=	minishell
+
 CC			=	cc
 
-CFLAGS		=	-g -Wall -Wextra -Werror -I./ -I./lib/Libft -I$(shell brew --prefix readline)/include
-LIBS 		= -L$(shell brew --prefix readline)/lib -lreadline
+CFLAGS		=	-g -Wall -Wextra -Werror -I./inc -I$(shell brew --prefix readline)/include  
+#-fsanitize=address
+#-Werror
+
+LFLAGS 		=	"-L$(shell brew --prefix readline)/lib" -lreadline 
 
 HEADER		=	minishell.h
 
 LIBRARY		=	lib/libft.a
 
-SRCS		=	parse/main.c \
+SRCS		=	main.c \
 				parse/tools/before_parse.c \
 				parse/tools/error.c \
+				parse/tools/signals.c \
 				parse/tools/freeing.c \
 				parse/tools/expand.c \
+				parse/tools/expand_tools.c \
 				parse/tools/heredoc.c \
 				parse/tools/tokenizer_tools.c \
 				parse/lexical_analyzer/create_tokens.c \
@@ -35,8 +30,11 @@ SRCS		=	parse/main.c \
 				exec/process_cmds.c \
 				exec/builtins.c \
 				exec/builtins2.c \
+				exec/builtins3.c \
 				exec/exuc_built.c \
-				exec/signals.c
+				exec/pipe_line.c \
+				exec/toolsbuilts.c \
+				exec/redirections.c \
 
 OBJS		= $(SRCS:.c=.o)
 
@@ -45,11 +43,11 @@ all : $(NAME)
 lib :
 	make -C lib
 
-$(NAME): $(OBJS) lib
-	$(CC) $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) $(LIBS)
+$(NAME) : $(OBJS) lib
+	@$(CC) $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) $(LFLAGS)
 
 %.o: %.c $(HEADER)
-	$(CC) $(CFLAGS) -c $< -o $@
+		$(CC)  $(CFLAGS) -c $< -o $@
 
 clean:
 	make clean -C lib
@@ -61,9 +59,10 @@ fclean:	clean
 
 re: fclean all
 
+
 push: fclean
 	git add .
-	git commit -m "parse"
+	git commit -m "exec done, sig herdc left"
 	git push
 
 .PHONY: clean fclean re lib

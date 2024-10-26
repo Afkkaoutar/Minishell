@@ -6,11 +6,11 @@
 /*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 10:37:33 by ychagri           #+#    #+#             */
-/*   Updated: 2024/09/26 14:40:55 by ychagri          ###   ########.fr       */
+/*   Updated: 2024/10/22 14:41:31 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../minishell.h"
+#include "minishell.h"
 
 char	*handle_string(t_token *current, char *new)
 {
@@ -22,26 +22,31 @@ char	*handle_string(t_token *current, char *new)
 	return (arg);
 }
 
-t_token	*handle_tokens(t_token **current, char **str)
+t_token	*handle_tokens(t_token **current, t_list **list)
 {
 	t_token	*tmp;
+	t_list	*new;
+	char	*str;
 
 	tmp = *current;
+	str = NULL;
 	while (tmp && tmp->type >= 6)
 	{
-		*str = ft_strjoin2(*str, tmp->content);
+		str = ft_strjoin2(str, tmp->content);
 		if (tmp->space)
 			break ;
 		tmp = tmp->next;
 	}
+	new = ft_lstnew(str);
+	ft_lstadd_back(list, new);
 	return (tmp);
 }
 
-t_token	*handle_limiters(t_token **current, t_lim **limiter)
+t_token	*handle_limiters(t_token **current, t_list **limiter)
 {
 	t_token	*tmp;
 	char	*str;
-	t_lim	*new;
+	t_list	*new;
 	bool	flag;
 
 	tmp = *current;
@@ -81,8 +86,8 @@ t_token	*cmd_tab2(t_cmd_tab *new, t_token *current)
 		}
 		else if (current->type == heredoc)
 		{
-			current = handle_limiters(&current->next, &new->delimiter);
 			new->heredoc = true;
+			current = handle_limiters(&current->next, &new->delimiter);
 		}
 	}
 	return (current);
@@ -93,8 +98,6 @@ void	command_table(t_args *cmdline)
 	t_token		*current;
 	t_cmd_tab	*new;
 
-	// printf("holaaa\n");
-	// ft_bzero(cmdline->table, sizeof(t_cmd_tab));
 	current = cmdline->tokens;
 	while (current)
 	{

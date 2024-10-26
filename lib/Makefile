@@ -6,7 +6,7 @@
 #    By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/03 01:10:21 by ychagri           #+#    #+#              #
-#    Updated: 2024/09/22 00:15:00 by ychagri          ###   ########.fr        #
+#    Updated: 2024/10/21 08:24:09 by ychagri          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,8 +14,8 @@ NAME = libft.a
 
 CC = cc 
 
-CFLAGS = -g -Wall -Wextra  -Werror 
-#-fsanitize=address
+CFLAGS = -g -Wall -Wextra  -Werror
+# -fsanitize=address
 
 ARC = ar rc
 
@@ -37,16 +37,13 @@ OBJS = $(SRC:.c=.o)
 all:$(NAME)
 
 $(NAME): $(OBJS)
-	$(ARC) $(NAME) $(OBJS)
+	@$(ARC) $(NAME) $(OBJS)
 
 %.o : %.c	$(LIBRARY)
 	$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm -f $(OBJS)
-	rm -f
-	rm -f
-
 
 fclean: clean
 	rm -f $(NAME)

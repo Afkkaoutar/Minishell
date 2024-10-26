@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   libft.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/02 19:08:16 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/09 18:59:37 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/21 12:40:59 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,12 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
+# include <stdbool.h>
 
 typedef struct s_list
 {
 	void			*content;
+	bool			quoted;
 	struct s_list	*next;
 	struct s_list	*previous;
 }					t_list;
@@ -28,18 +30,18 @@ int		ft_atoi(char *str);
 int		ft_isalnum(int c);
 int		ft_isalpha(int c);
 int		ft_isascii(int c);
-int	ft_isdigit_str(char *str);
+int		ft_isdigit_str(char *str);
 int		ft_isprint(int c);
 int		ft_tolower(int c);
 int		ft_toupper(int c);
 int		ft_lstsize(t_list *lst);
 int		ft_strncmp(const char *s1, const char *s2, size_t n);
 int		ft_memcmp(const void *s1, const void *s2, size_t n);
-int 	ft_isdigit(int c);
+int		ft_isdigit(int c);
 
 char	*ft_strnstr(const char *str, const char *to_find, size_t n);
 char	*ft_strrchr(char *s, int c);
-char *ft_strdup(const char *str);
+char	*ft_strdup(char *str);
 char	*ft_substr(char const *s, unsigned int start, size_t len);
 char	*ft_strjoin(char const *s1, char const *s2);
 char	*ft_strjoin2(char *s1, char *s2);

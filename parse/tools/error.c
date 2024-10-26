@@ -6,27 +6,27 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 06:45:51 by ychagri           #+#    #+#             */
-/*   Updated: 2024/09/30 02:12:14 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/25 09:15:27 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../minishell.h"
+#include "minishell.h"
+
+void	del(void *content)
+{
+	free(content);
+}
 
 void	put_error(t_args *cmd_line, char *msg, char *name)
 {
-	int g_errno = 0;
-	ft_putstr_fd("minionshell :"RED, 2);
+	(void) cmd_line;
+	ft_putstr_fd("minionshell: "RED, 2);
 	ft_putstr_fd(msg, 2);
 	if (name)
 		ft_putstr_fd(name, 2);
 	ft_putstr_fd("\n"RESET, 2);
-	free(cmd_line->line);
-	cmd_line->line = NULL;
-	if (cmd_line->tokens)
-		free_tokens(&cmd_line->tokens);
-	if (cmd_line->table)
-		free_table(&cmd_line->table);
 	g_errno = EXIT_FAILURE;
+	// printf("\n\n<<%d>>\n\n", g_errno);
 }
 
 bool	syntax_check(t_args *cmdline)
@@ -50,8 +50,6 @@ bool	syntax_check(t_args *cmdline)
 			|| (current->type == piipe && (current == cmdline->tokens
 					|| !next || next->type < string)))
 			return (put_error(cmdline, SYNTAX, NULL), false);
-		if (current->type == piipe)
-			cmdline->cmd_num++;
 		current = current->next;
 	}
 	return (true);
@@ -59,6 +57,8 @@ bool	syntax_check(t_args *cmdline)
 
 void	free_current_cmdline(t_args *cmdline)
 {
+	if (!cmdline)
+		return ;
 	free(cmdline->line);
 	cmdline->line = NULL;
 	free_table(&cmdline->table);

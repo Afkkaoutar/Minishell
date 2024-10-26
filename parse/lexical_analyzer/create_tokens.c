@@ -6,11 +6,11 @@
 /*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 06:29:42 by ychagri           #+#    #+#             */
-/*   Updated: 2024/09/26 19:44:57 by ychagri          ###   ########.fr       */
+/*   Updated: 2024/10/19 12:33:59 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../minishell.h"
+#include "minishell.h"
 
 t_token	*new_token(char *content, int type)
 {
@@ -105,7 +105,7 @@ int	words_list(char	*line, t_args *cmd_line)
 	{
 		i = 0;
 		word = get_word(&line, cmd_line);
-		if (word && *word == '\'')
+		if (word && ft_strncmp(word, "\'", 2) == 0)
 			return (0);
 		if (!word || !*word)
 			break ;

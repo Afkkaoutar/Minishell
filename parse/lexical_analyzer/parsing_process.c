@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   parsing_process.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 23:59:55 by ychagri           #+#    #+#             */
-/*   Updated: 2024/09/30 02:17:45 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/24 19:09:12 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../minishell.h"
+#include "minishell.h"
 
 t_cmd_tab	*new_tab(void)
 {
@@ -42,25 +42,66 @@ void	table_add_back(t_cmd_tab **head, t_cmd_tab *new)
 	prev->next = new;
 }
 
+int	heredoc_check(t_token *token)
+{
+	t_token	*temp;
+	char	*lim;
+
+	temp = token;
+	while (temp && temp->type != piipe)
+	{
+		if (temp->type == heredoc)
+		{
+			lim = NULL;
+			temp = temp->next;
+			while (temp && temp->type >= string)
+			{
+				lim = ft_strjoin2(lim, temp->content);
+				if (temp->space == true)
+					break ;
+				temp = temp->next;
+			}
+			if (read_line(lim, NULL, NO_EXW, NULL))
+				return (free(lim), 1);
+			free(lim);
+		}
+		else if (temp)
+			temp = temp->next;
+	}
+	return (0);
+}
+
 int	process_line(t_args *cmdline)
 {
 	char		*tmp;
 	t_cmd_tab	*tab;
-	int g_errno = 0;
 
 	tmp = ft_strdup(cmdline->line);
 	if (!*tmp)
-		return (g_errno = EXIT_SUCCESS, 1);
+		return (free(tmp), g_errno = EXIT_SUCCESS, 1);
 	if (!words_list(tmp, cmdline))
-		return (free(tmp), g_errno);
+	{
+		if (heredoc_check(cmdline->tokens))
+		{
+			free(tmp);
+			if (dup2(cmdline->fdin, STDIN_FILENO) == -1)
+          		return (put_error(cmdline, "dup2 error on fdin", NULL), free_struct(cmdline), 1);
+			return (g_errno = 1, 1);
+		}
+	}
 	free(tmp);
 	remove_q(&cmdline->tokens);
 	if (!syntax_check(cmdline))
-		return (g_errno);
+	{
+		if (heredoc_check(cmdline->tokens))
+		{
+			if (dup2(cmdline->fdin, STDIN_FILENO) == -1)
+          		return (put_error(cmdline, "dup2 error on fdin", NULL), free_struct(cmdline), 1);
+			return (g_errno = 1, 1);
+		}
+	}
 	expand_var(&cmdline);
-	// fprintf(stderr, "heeere i am \n");
 	command_table(cmdline);
-	// printf("heere\n");
 	tab = cmdline->table;
 	while (tab)
 	{
@@ -69,6 +110,10 @@ int	process_line(t_args *cmdline)
 		tab->arg = NULL;
 		tab = tab->next;
 	}
-	ft_heredoc(&cmdline->table);
-	return (0);
+	if (ft_heredoc(&cmdline->table))
+	{
+		if (dup2(cmdline->fdin, STDIN_FILENO) == -1)
+           return (put_error(cmdline, "dup2 error on fdin", NULL), free_struct(cmdline), 1);
+	}
+	return (g_errno = 0, 0);
 }

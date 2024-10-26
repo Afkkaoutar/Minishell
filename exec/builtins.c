@@ -6,16 +6,16 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/13 22:01:15 by kaafkhar          #+#    #+#             */
-/*   Updated: 2024/10/13 22:43:56 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/10/26 04:24:44 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../minishell.h"
+#include "minishell.h"
 
 void echo(t_args *args, t_cmd_tab *cmd)
 {
     (void)args;
-
+    
     int newline = 1;
     int i = 0;
 
@@ -42,84 +42,99 @@ void echo(t_args *args, t_cmd_tab *cmd)
         printf("\n");
 }
 
-int exec_cd(t_cmd_tab *cmd, t_env *env)
+void add_env_node(t_list *env, char *new_content)
 {
-    char *path;
+    t_list *new_node = malloc(sizeof(t_list));
+    if (!new_node)
+        return;
+    
+    new_node->content = new_content;
+    new_node->next = env;
+    env = new_node;
+}
 
-    if (cmd->cmd[1])
+
+int cd(t_cmd_tab *cmd, t_list *env)
+{
+    char current_path[PATH_MAX];
+    char *oldpwd = NULL;
+    char *home = NULL;
+    
+    if (getcwd(current_path, PATH_MAX) == NULL)
     {
-        if (chdir(cmd->cmd[1]) != 0)
-            perror("cd");
+        perror("cd");
+        return 1;
+    }
+
+    if (!cmd->cmd[1])
+    {
+        home = path(env, "HOME");
+        if (!home)
+        {
+            ft_putendl_fd("cd: HOME not set", 2);
+            return 1;
+        }
+        if (chdir(home) != 0)
+        {
+            ft_putstr_fd("cd: ", 2);
+            perror(home);
+            return 1;
+        }
+    }
+    else if (ft_strcmp(cmd->cmd[1], "-") == 0)
+    {
+        oldpwd = path(env, "OLDPWD");
+        if (!oldpwd)
+        {
+            ft_putendl_fd("cd: OLDPWD not set", 2);
+            return 1;
+        }
+        if (chdir(oldpwd) != 0)
+        {
+            ft_putstr_fd("cd: ", 2);
+            perror(oldpwd);
+            return 1;
+        }
+        ft_putendl_fd(oldpwd, 1);
     }
     else
     {
-        path = get_path(env, "HOME");
-        if (!path)
+        if (chdir(cmd->cmd[1]) != 0)
         {
-            fprintf(stderr, "cd: HOME not set\n");
-            return (1);
+            ft_putstr_fd("cd: ", 2);
+            perror(cmd->cmd[1]);
+            return 1;
         }
-        if (chdir(path) != 0)
-            perror("cd");
-        free(path);
     }
-    return (1);
-}
 
-int pwd(t_args *arg, char **cmd)
-{
-    (void)arg;
-    (void)cmd;
-
-    char *cwd = getcwd(NULL, 0);
-    if (cwd == NULL)
+    char new_path[PATH_MAX];
+    if (getcwd(new_path, PATH_MAX) != NULL)
     {
-        perror("pwd");
-        return 0;
-    }
-    printf("%s\n", cwd);
-    free(cwd);
-    return 1; 
-}
-
-void exec_exit(t_args *args, t_cmd_tab *cmd)
-{
-    (void)args;
-
-    if (cmd->arg && cmd->arg[0])
-    {
-        if (cmd->next)
+        char *oldpwd_str = ft_strjoin("OLDPWD=", current_path);
+        t_list *oldpwd_node = find_env_node2(env, "OLDPWD=");
+        
+        if (oldpwd_node)
         {
-            fprintf(stderr, "exit: too many arguments\n");
-            return;
-        }
-        if (is_num(cmd->arg))
-        {
-            exit(ft_atoi(cmd->arg));
+            free(oldpwd_node->content);
+            oldpwd_node->content = oldpwd_str;
         }
         else
         {
-            fprintf(stderr, "exit: %s: numeric argument required\n", cmd->arg);
-            exit(255);
+            add_env_node(env, oldpwd_str);
         }
-    }
-    exit(0);
-}
 
-void exec_env(t_cmd_tab *cmd, t_env *env)
-{
-    (void)cmd;
-
-    if (!env)
-        return;
-
-    t_env *tmp = env;
-    while (tmp)
-    {
-        if (tmp->var && tmp->value)
+        char *pwd_str = ft_strjoin("PWD=", new_path);
+        t_list *pwd_node = find_env_node2(env, "PWD=");
+        
+        if (pwd_node)
         {
-            printf("%s=%s\n", tmp->var, tmp->value);
+            free(pwd_node->content);
+            pwd_node->content = pwd_str;
         }
-        tmp = tmp->next;
+        else
+        {
+            add_env_node(env, pwd_str);
+        }
     }
+    return (0);
 }
