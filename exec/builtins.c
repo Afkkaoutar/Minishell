@@ -3,138 +3,114 @@
 /*                                                        :::      ::::::::   */
 /*   builtins.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/13 22:01:15 by kaafkhar          #+#    #+#             */
-/*   Updated: 2024/10/26 04:24:44 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/11/03 17:27:43 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void echo(t_args *args, t_cmd_tab *cmd)
+int	change_directory_to_home(char *home)
 {
-    (void)args;
-    
-    int newline = 1;
-    int i = 0;
-
-    if (cmd && !cmd->cmd[1])
-    {
-        printf("\n");
-        return;
-    }
-
-    if (cmd->cmd[1] && ft_strcmp(cmd->cmd[1], "-n") == 0)
-    {
-        newline = 0;
-        i++;
-    }
-
-    while (cmd->cmd[++i])
-    {
-        printf("%s", cmd->cmd[i]);
-        if (cmd->cmd[i + 1])
-            printf(" ");
-    }
-
-    if (newline)
-        printf("\n");
+	if (!home)
+	{
+		put_built_err("cd: ", NULL, HOMNOTSET);
+		return (1);
+	}
+	else if (chdir(home) != 0)
+	{
+		ft_putstr_fd("cd: ", 2);
+		perror(home);
+		return (exit_code(EXIT_FAILURE, EDIT));
+	}
+	return (0);
 }
 
-void add_env_node(t_list *env, char *new_content)
+int	handle_cd_command(t_cmd_tab *cmd, t_list *env)
 {
-    t_list *new_node = malloc(sizeof(t_list));
-    if (!new_node)
-        return;
-    
-    new_node->content = new_content;
-    new_node->next = env;
-    env = new_node;
+	char	*oldpwd;
+	char	*home;
+
+	if (!cmd->cmd[1])
+	{
+		home = path(env, "HOME");
+		if (change_directory_to_home(home) == 1)
+			return (1);
+	}
+	else if (ft_strncmp(cmd->cmd[1], "-", 2) == 0)
+	{
+		oldpwd = path(env, "OLDPWD");
+		if (change_directory_to_oldpwd(oldpwd))
+			return (1);
+	}
+	else
+	{
+		if (chdir(cmd->cmd[1]) != 0)
+		{
+			ft_putstr_fd("cd: ", 2);
+			perror(cmd->cmd[1]);
+			return (exit_code(EXIT_FAILURE, EDIT));
+		}
+	}
+	return (0);
 }
 
-
-int cd(t_cmd_tab *cmd, t_list *env)
+void	update_oldpwd(t_list **env, char *current_path)
 {
-    char current_path[PATH_MAX];
-    char *oldpwd = NULL;
-    char *home = NULL;
-    
-    if (getcwd(current_path, PATH_MAX) == NULL)
-    {
-        perror("cd");
-        return 1;
-    }
+	char	*oldpwd_str;
+	t_list	*oldpwd_node;
 
-    if (!cmd->cmd[1])
-    {
-        home = path(env, "HOME");
-        if (!home)
-        {
-            ft_putendl_fd("cd: HOME not set", 2);
-            return 1;
-        }
-        if (chdir(home) != 0)
-        {
-            ft_putstr_fd("cd: ", 2);
-            perror(home);
-            return 1;
-        }
-    }
-    else if (ft_strcmp(cmd->cmd[1], "-") == 0)
-    {
-        oldpwd = path(env, "OLDPWD");
-        if (!oldpwd)
-        {
-            ft_putendl_fd("cd: OLDPWD not set", 2);
-            return 1;
-        }
-        if (chdir(oldpwd) != 0)
-        {
-            ft_putstr_fd("cd: ", 2);
-            perror(oldpwd);
-            return 1;
-        }
-        ft_putendl_fd(oldpwd, 1);
-    }
-    else
-    {
-        if (chdir(cmd->cmd[1]) != 0)
-        {
-            ft_putstr_fd("cd: ", 2);
-            perror(cmd->cmd[1]);
-            return 1;
-        }
-    }
+	oldpwd_str = ft_strjoin("OLDPWD=", current_path);
+	oldpwd_node = find_env_node2(*env, "OLDPWD=");
+	if (oldpwd_node)
+	{
+		free(oldpwd_node->content);
+		oldpwd_node->content = oldpwd_str;
+	}
+	else
+		ft_lstadd_back(env, ft_lstnew(oldpwd_str));
+}
 
-    char new_path[PATH_MAX];
-    if (getcwd(new_path, PATH_MAX) != NULL)
-    {
-        char *oldpwd_str = ft_strjoin("OLDPWD=", current_path);
-        t_list *oldpwd_node = find_env_node2(env, "OLDPWD=");
-        
-        if (oldpwd_node)
-        {
-            free(oldpwd_node->content);
-            oldpwd_node->content = oldpwd_str;
-        }
-        else
-        {
-            add_env_node(env, oldpwd_str);
-        }
+void	update_pwd(t_list **env, char *new_path)
+{
+	char	*pwd_str;
+	t_list	*pwd_node;
 
-        char *pwd_str = ft_strjoin("PWD=", new_path);
-        t_list *pwd_node = find_env_node2(env, "PWD=");
-        
-        if (pwd_node)
-        {
-            free(pwd_node->content);
-            pwd_node->content = pwd_str;
-        }
-        else
-        {
-            add_env_node(env, pwd_str);
-        }
-    }
-    return (0);
+	pwd_node = find_env_node2(*env, "PWD=");
+	pwd_str = ft_strjoin("PWD=", new_path);
+	if (pwd_node)
+	{
+		free(pwd_node->content);
+		pwd_node->content = pwd_str;
+	}
+	else
+		ft_lstadd_back(env, ft_lstnew(pwd_str));
+}
+
+int	cd(t_cmd_tab *cmd, t_list **env, int flag)
+{
+	char	current_path[PATH_MAX];
+	char	new_path[PATH_MAX];
+	int		err;
+
+	(void)err;
+	if (flag == SINGLE)
+		if (infile_opn(cmd) || outfile_opn(cmd))
+			return (1);
+	if (getcwd(current_path, PATH_MAX) == NULL)
+	{
+		perror("cd");
+		err = exit_code(EXIT_FAILURE, EDIT);
+	}
+	else if (handle_cd_command(cmd, *env) == 1)
+		return (1);
+	if (getcwd(new_path, PATH_MAX) != NULL)
+	{
+		update_oldpwd(env, current_path);
+		update_pwd(env, new_path);
+	}
+	exit_code(EXIT_SUCCESS, EDIT);
+	return (0);
 }

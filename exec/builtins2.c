@@ -3,210 +3,121 @@
 /*                                                        :::      ::::::::   */
 /*   builtins2.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/30 00:04:49 by kaafkhar          #+#    #+#             */
-/*   Updated: 2024/10/26 04:08:03 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/11/04 03:51:47 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void ordre_alpha(t_list **env)
+int	add_new_env_var(t_args *args, const char *cmd, int append)
 {
-		t_list *i;
-		t_list *j;
-		char *temp;
+	t_list	*new_node;
+	char	*new_content;
 
-		if (!env || !(*env))
-			return;
-
-		i = *env;
-		while (i)
-		{
-			j = i->next;
-			while (j)
-			{
-				if (ft_strcmp((char *)i->content, (char *)j->content) > 0)
-				{
-					temp = i->content;
-					i->content = j->content;
-					j->content = temp;
-				}
-				j = j->next;
-			}
-			i = i->next;
-	}
-}
-
-static int	append_env_value(t_list *env_node, char *cmd, char *equal_sign)
-{
-	char		*old_value;
-	char		*new_value;
-	char		*temp;
-	char		*final;
-
-	old_value = ft_strchr((char *)env_node->content, '=');
-	if (!old_value)
-		return (1);
-	old_value++;
-
-	new_value = ft_strjoin(old_value, equal_sign + 1);
-	if (!new_value)
-		return (1);
-	temp = ft_strjoin(cmd, "=");
-	if (!temp)
+	new_content = prepare_new_content(cmd, append);
+	if (!new_content)
+		return ((exit_code(1, EDIT)));
+	new_node = ft_lstnew(new_content);
+	if (!new_node)
 	{
-		free(new_value);
-		return (1);
+		free(new_content);
+		return (g_errno = 1);
 	}
-	final = ft_strjoin(temp, new_value);
-	free(temp);
-	free(new_value);
-
-	if (!final)
-		return (1);
-
-	free(env_node->content);
-	env_node->content = final;
+	ft_lstadd_back(&(args->env), new_node);
 	return (0);
 }
 
-int	update_env_value(t_list *env_node, char *cmd, int append)
+int	updates(t_cmd_tab *cmd, char *variable, char *find_sign, int i)
 {
-	char	*key;
-	char	*equal_sign;
-	char	*append_pos;
+	t_list	*env_node;
 
-	append_pos = ft_strnstr(cmd, "+=", ft_strlen(cmd));
-	equal_sign = append ? (append_pos + 1) : ft_strchr(cmd, '=');
-
-	if (!equal_sign)
-		return (1);
-
-	key = ft_substr(cmd, 0, append ? (append_pos - cmd) : (equal_sign - cmd));
-	if (!key)
-		return (1);
-
-	if (append)
+	env_node = find_env_node(cmd->data->env, variable);
+	if (env_node)
 	{
-		if (append_env_value(env_node, cmd, equal_sign))
+		if (find_sign)
 		{
-			free(key);
-			return (1);
+			if (update_env_value(env_node, cmd->cmd[i], 1) != 0)
+				return (exit_code(1, EDIT));
+		}
+		else if (ft_strchr(cmd->cmd[i], '='))
+		{
+			if (update_env_value(env_node, cmd->cmd[i], 0) != 0)
+				return (exit_code(1, EDIT));
 		}
 	}
 	else
 	{
-		free(env_node->content);
-		env_node->content = ft_strdup(cmd);
-		if (!env_node->content)
-		{
-			free(key);
-			return (1);
-		}
+		if (add_new_env_var(cmd->data, cmd->cmd[i], find_sign != NULL) != 0)
+			return (exit_code(1, EDIT));
 	}
-
-	free(key);
 	return (0);
 }
-int is_valid_identifier(const char *str)
+
+void	ordre_env_vars(t_list **env)
 {
-    if (!str || !*str)
-        return (0);
+	t_list	*i;
+	t_list	*j;
+	char	*temp;
 
-    if (!isalpha(*str) && *str != '_')
-        return 0;
-
-    str++;
-    while (*str)
-    {
-        if (!isalnum(*str) && *str != '_')
-            return 0;
-        str++;
-    }
-    return (1);
+	i = *env;
+	while (i && i->next)
+	{
+		j = i->next;
+		while (j)
+		{
+			if (ft_strcmp((char *)i->content, (char *)j->content) > 0)
+			{
+				temp = i->content;
+				i->content = j->content;
+				j->content = temp;
+			}
+			j = j->next;
+		}
+		i = i->next;
+	}
 }
 
-int export_variable(t_args *args, t_cmd_tab *cmd)
+void	display_env_vars(t_list *env)
 {
-    t_list *current;
+	t_list	*current;
 
-    if (cmd->cmd[1] == NULL)
-    {
-        current = args->env;
-        while (current)
-        {
-            printf("declare -x %s\n", (char *)current->content);
-            current = current->next;
-        }
-        return (0);
-    }
+	ordre_env_vars(&env);
+	current = env;
+	while (current)
+	{
+		printf("declare -x %s\n", (char *)current->content);
+		current = current->next;
+	}
+}
 
-    char *append_sign = ft_strnstr(cmd->cmd[1], "+=", ft_strlen(cmd->cmd[1]));
-    char *equal_sign = append_sign ? append_sign + 1 : ft_strchr(cmd->cmd[1], '=');
+int	export_variable(t_args *args, t_cmd_tab *cmd, int flag)
+{
+	char	*find_sign;
+	char	*variable;
+	int		result;
+	int		i;
 
-    if (!equal_sign && !append_sign)
-    {
-        printf("export: invalid argument: %s\n", cmd->cmd[1]);
-        return (1);
-    }
-
-    char *identifier;
-    if (append_sign)
-        identifier = ft_substr(cmd->cmd[1], 0, append_sign - cmd->cmd[1]);
-    else
-        identifier = ft_substr(cmd->cmd[1], 0, equal_sign - cmd->cmd[1]);
-
-    if (!is_valid_identifier(identifier))
-    {
-        printf("export: `%s': not a valid identifier\n", cmd->cmd[1]);
-        free(identifier);
-        return (1);
-    }
-    free(identifier);
-
-    t_list *env_node = find_env_node(args->env, cmd->cmd[1]);
-    if (env_node)
-    {
-        return update_env_value(env_node, cmd->cmd[1], append_sign != NULL);
-    }
-    else
-    {
-        char *new_content;
-        if (append_sign)
-        {
-            char *key = ft_substr(cmd->cmd[1], 0, append_sign - cmd->cmd[1]);
-            if (!key)
-                return (1);
-            
-            char *value = ft_strjoin("=", equal_sign + 1);
-            if (!value)
-            {
-                free(key);
-                return (1);
-            }
-            
-            new_content = ft_strjoin(key, value);
-            free(key);
-            free(value);
-        }
-        else
-            new_content = ft_strdup(cmd->cmd[1]);
-
-        if (!new_content)
-            return (1);
-
-        t_list *new_node = ft_lstnew(new_content);
-        if (!new_node)
-        {
-            free(new_content);
-            return (1);
-        }
-
-        ft_lstadd_back(&(args->env), new_node);
-    }
-
-    ordre_alpha(&(args->env));
-    return (0);
+	i = 1;
+	if (flag == SINGLE && (infile_opn(cmd) || outfile_opn(cmd)))
+		return (1);
+	exit_code(EXIT_SUCCESS, EDIT);
+	if (!cmd->cmd[1])
+		return (display_env_vars(args->env), exit_code(EXIT_SUCCESS, EDIT));
+	while (cmd->cmd[i])
+	{
+		find_sign = ft_strnstr(cmd->cmd[i], "+=", ft_strlen(cmd->cmd[i]));
+		variable = extract_variable(cmd->cmd[i], find_sign != NULL);
+		if (ft_strncmp(variable, "PATH", 5) == 0)
+			args->env_i = false;
+		if (!variable || !is_valid(variable))
+			put_built_err("export: ", variable, NOTVALID);
+		else
+			result = updates(cmd, variable, find_sign, i);
+		free(variable);
+		i++;
+	}
+	return (exit_code(0, RETRIEVE));
 }

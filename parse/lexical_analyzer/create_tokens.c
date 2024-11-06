@@ -6,28 +6,13 @@
 /*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 06:29:42 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/19 12:33:59 by ychagri          ###   ########.fr       */
+/*   Updated: 2024/11/03 02:25:33 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-t_token	*new_token(char *content, int type)
-{
-	t_token	*token;
-
-	if (!content)
-		return (NULL);
-	token = malloc(sizeof(t_token));
-	if (!token)
-		return (NULL);
-	token->content = content;
-	token->next = NULL;
-	token->type = type;
-	return (token);
-}
-
-char	*get_word(char **line, t_args *cmd_line)
+char	*get_word(char **line)
 {
 	int		i;
 	int		start;
@@ -39,35 +24,35 @@ char	*get_word(char **line, t_args *cmd_line)
 	if (!*line || !line || !**line)
 		return (NULL);
 	tmp = *line;
-	while (tmp[i] && tmp[i] == ' ')
+	while (tmp[i] && (tmp[i] == ' ' || tmp[i] == '\t'))
 		i++;
 	start = i;
 	len = word_len(tmp + i);
 	if (len == -1)
-		return (put_error(cmd_line, SYNTAX, NULL), ft_strdup("\'"));
+		return (put_error(SYNTAX, NULL), ft_strdup("\'"));
 	word = ft_substr(tmp, start, (size_t)len);
 	*line = *line + len + i;
 	return (word);
 }
 
-t_type	get_type(char *word, t_args *cmd_line)
+t_type	get_type(char *word)
 {
 	if (*word == '<' && ft_strlen(word) == 2)
 		return (heredoc);
-	if (*word == '>' && ft_strlen(word) == 2)
+	else if (*word == '>' && ft_strlen(word) == 2)
 		return (append);
-	if (*word == '<' && ft_strlen(word) == 1)
+	else if (*word == '<' && ft_strlen(word) == 1)
 		return (redin);
-	if (*word == '>' && ft_strlen(word) == 1)
+	else if (*word == '>' && ft_strlen(word) == 1)
 		return (redout);
-	if (*word == '|' && ft_strlen(word) == 1)
+	else if (*word == '|' && ft_strlen(word) == 1)
 		return (piipe);
-	if (*word == '\'')
+	else if (*word == '\'')
 		return (single_quote);
-	if (*word == '\"')
+	else if (*word == '\"')
 		return (double_quote);
-	if (is_seperator(*word))
-		return (put_error(cmd_line, SYNTAX, NULL), 0);
+	else if (is_seperator(*word))
+		return (put_error(SYNTAX, NULL), 0);
 	else
 		return (string);
 }
@@ -104,17 +89,17 @@ int	words_list(char	*line, t_args *cmd_line)
 	while (1)
 	{
 		i = 0;
-		word = get_word(&line, cmd_line);
+		word = get_word(&line);
 		if (word && ft_strncmp(word, "\'", 2) == 0)
-			return (0);
+			return (free(word), 0);
 		if (!word || !*word)
 			break ;
-		type = get_type(word, cmd_line);
+		type = get_type(word);
 		if (type == 0)
 			return (free(word), 0);
 		lst = new_token(word, type);
 		tokenadd_back(&cmd_line->tokens, lst);
-		while (line[i] && line[i] == ' ')
+		while (line[i] && (line[i] == ' ' || line[i] == '\t'))
 			i++;
 		lst->space = line[i] && i > 0;
 	}

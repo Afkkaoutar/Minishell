@@ -6,68 +6,105 @@
 /*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/25 18:52:56 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/23 21:39:06 by ychagri          ###   ########.fr       */
+/*   Updated: 2024/11/04 04:59:30 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	exec(t_cmd_tab *table, char **env)
+int	exec(t_cmd_tab *table, t_list *env)
 {
 	int		i;
 	char	*path;
+	char	**bin;
+	char	**envp;
 	int		err;
 
 	i = 0;
-	while (table->data->path[i])
+	path = envgetter("PATH", env);
+	envp = lst_to_array(env);
+	if (!path)
+		err = execve(table->cmd[0], table->cmd, envp);
+	else
 	{
-		path = ft_strjoin(table->data->path[i], "/");
-		path = ft_strjoin2(path, table->cmd[0]);
-		err = execve(path, table->cmd, env);
+		bin = ft_split(path, ':');
 		free(path);
-		i++;
+		err = 0;
+		while (bin[i])
+		{
+			path = ft_strjoin(bin[i++], "/");
+			path = ft_strjoin2(path, table->cmd[0]);
+			err = execve(path, table->cmd, envp);
+			free(path);
+		}
 	}
 	return (err);
 }
 
-int	execute(t_cmd_tab *table)
+void	exec_bin(t_cmd_tab *table, char **env)
 {
-	char	**env;
-	int		err;
+	int			err;
+	struct stat	status;
+
+	err = execve(table->cmd[0], table->cmd, env);
+	if (err == -1)
+	{
+		if (execve(table->cmd[0], table->cmd, env) == -1)
+		{
+			if (stat(table->cmd[0], &status) == 0)
+			{
+				if (S_ISDIR(status.st_mode))
+					return (put_error(ISDIR, table->cmd[0]),
+						free_array(env), exit(EXIT_ESDIR));
+				if (!(S_IXUSR & status.st_mode))
+					return (put_error(PERMISSION, table->cmd[0]),
+						free_array(env), exit(EXIT_ESDIR));
+			}
+			return (put_error(INTROUVABLE_FILE, table->cmd[0]),
+				free_array(env), exit(BINARY_ERROR));
+		}
+	}
+}
+
+void	execute(t_cmd_tab *table)
+{
+	char			**env;
+	int				err;
+	int				built;
 
 	if (infile_opn(table) || outfile_opn(table))
 		exit(EXIT_FAILURE);
 	if (table->cmd)
 	{
-		env = lst_to_array(table->data->env);
-		err = 0;
-		if (ft_strchr(table->cmd[0], '/'))
+		built = exec_builtin(table->data, table, MULTI);
+		if (built == NOT_BUITIN)
 		{
-			if (execve(table->cmd[0], table->cmd, env) == -1)
-				return (put_error(table->data, INTROUVABLE_FILE, table->cmd[0]),
-					free_array(env), 127);
+			env = lst_to_array(table->data->env);
+			err = 0;
+			if (ft_strchr(table->cmd[0], '/'))
+				exec_bin(table, env);
+			err = exec(table, table->data->env);
+			if (err == -1)
+				return (put_error(NOTFOUNDMSG, table->cmd[0]),
+					free_array(env), exit(BINARY_ERROR));
 		}
-		err = exec(table, env);
-		if (err == -1)
-			return (put_error(table->data, NOTFOUNDMSG, table->cmd[0]),
-				free_array(env), 127);
+		exit (built);
 	}
-	return (0);
+	exit(0);
 }
 
 int	single_cmd(t_cmd_tab *table)
 {
 	int		status;
 	pid_t	pid;
+	int		code;
 
+	signal(SIGQUIT, sigquit_handler);
 	pid = fork();
 	if (pid == -1)
-		return (put_error(table->data, FORKMSG, NULL), 1);
+		return (put_error(FORKMSG, NULL), 1);
 	else if (pid == 0)
-	{
-		g_errno = execute(table);
-		exit(g_errno);
-	}
+		execute(table);
 	else
 	{
 		close(STDIN_FILENO);
@@ -76,8 +113,8 @@ int	single_cmd(t_cmd_tab *table)
 			close(table->fd_heredoc);
 		if (WIFEXITED(status))
 		{
-			g_errno = WEXITSTATUS(status);
-			return (g_errno);
+			code = WEXITSTATUS(status);
+			return (exit_code(code, EDIT), code);
 		}
 	}
 	return (0);

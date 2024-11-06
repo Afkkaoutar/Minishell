@@ -6,53 +6,31 @@
 /*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/22 01:42:42 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/24 19:06:19 by ychagri          ###   ########.fr       */
+/*   Updated: 2024/11/03 04:33:37 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-t_list	*new_lim(char *content, bool quote)
-{
-	t_list	*new;
-
-	new = ft_lstnew(content);
-	new->next = NULL;
-	new->quoted = quote;
-	return (new);
-}
-
-void	ft_limadd_back(t_list **lst, t_list *new)
-{
-	t_list	*ptr;
-	t_list	*tmp;
-
-	if (!lst || !new)
-		return ;
-	if (*lst == NULL)
-	{
-		*lst = new;
-		return ;
-	}
-	tmp = *lst;
-	while (tmp)
-	{
-		if (tmp->next == NULL)
-			ptr = tmp;
-		tmp = tmp->next;
-	}
-	ptr->next = new;
-}
-
 void	heredc_sig(int signal)
 {
 	(void)signal;
 	g_errno = -1;
-	rl_replace_line("", 0); // Clear the current line
-	write(STDOUT_FILENO, "\n", 1);
-    rl_on_new_line(); // Move to the next line
-    // rl_redisplay(); //
+	rl_replace_line("", 0);
+	rl_on_new_line();
 	close(STDIN_FILENO);
+}
+
+int	recieved_sig(t_args *cmdline)
+{
+	if (g_errno == -1)
+	{
+		g_errno = 0;
+		if (dup2(cmdline->fdin, STDIN_FILENO) == -1)
+			return (put_error(DUP2SG, NULL), 1);
+		return (free_current_cmdline(cmdline), exit_code(EXIT_FAILURE, EDIT));
+	}
+	return (0);
 }
 
 int	read_line(char *limiter, int *fd, int flag, t_args *cmdline)
@@ -60,28 +38,22 @@ int	read_line(char *limiter, int *fd, int flag, t_args *cmdline)
 	char	*buffer;
 
 	signal(SIGINT, heredc_sig);
+	signal(SIGQUIT, SIG_IGN);
+	buffer = NULL;
 	while (1)
 	{
 		buffer = readline("heredoc> ");
-		if (!buffer)
-		{
-			if (g_errno == -1)
-			{
-				free_current_cmdline(cmdline);
-				g_errno = 1;
-				return (1);
-			}
-			else
-				break ;
-		}
+		if (!buffer && recieved_sig(cmdline))
+			return (1);
+		else if (!buffer)
+			break ;
 		if (ft_strncmp(buffer, limiter, ft_strlen(limiter) + 1) == 0)
 			break ;
 		if (flag != NO_EXW)
 		{
 			if (flag == EXPND_W)
-				buffer = expand(buffer, double_quote, cmdline->env);
-			buffer = ft_strjoin2(buffer, "\n");
-			write (fd[1], buffer, ft_strlen(buffer));
+				buffer = expand(buffer, cmdline->env);
+			ft_putendl_fd(buffer, fd[1]);
 		}
 		free(buffer);
 	}
@@ -128,7 +100,7 @@ int	ft_heredoc(t_cmd_tab **cmds)
 		{
 			if (pipe(fd) == -1)
 				return (ft_putstr_fd("pipe has failed", 2),
-					g_errno = EXIT_FAILURE, 1);
+					exit_code(1, EDIT), 1);
 			tmp = cmdtable->delimiter;
 			err = open_heredoc(tmp, fd, (*cmds)->data);
 			if (err)

@@ -6,13 +6,13 @@
 /*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/25 19:03:41 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/26 01:53:04 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/11/03 01:19:12 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	check_files(t_args *args, char *filename, int flag)
+int	check_files(char *filename, int flag)
 {
 	int	err;
 
@@ -27,9 +27,9 @@ int	check_files(t_args *args, char *filename, int flag)
 	if (flag == INPUT && access(filename, F_OK) != 0)
 		err = 2;
 	if (err == 2)
-		return (put_error(args, INTROUVABLE_FILE, filename), 1);
+		return (put_error(INTROUVABLE_FILE, filename), 1);
 	else if (err == 1)
-		return (put_error(args, PERMISSION, filename), 1);
+		return (put_error(PERMISSION, filename), 1);
 	return (0);
 }
 
@@ -75,6 +75,8 @@ int	is_num(char *str)
 	{
 		if (str[i] >= '0' && str[i] <= '9')
 			i++;
+		else if ((str[i] == '-' || str[i] == '+') && i == 0)
+			i++;
 		else
 			return (0);
 	}
@@ -87,8 +89,8 @@ char	*path(t_list *env, const char *var_name)
 	size_t	var_len;
 	char	*env_var;
 
-	current = env;
 	var_len = ft_strlen(var_name);
+	current = env;
 	while (current)
 	{
 		env_var = (char *)current->content;

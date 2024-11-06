@@ -4,12 +4,12 @@ NAME 		=	minishell
 CC			=	cc
 
 CFLAGS		=	-g -Wall -Wextra -Werror -I./inc -I$(shell brew --prefix readline)/include  
-#-fsanitize=address
-#-Werror
+#-fsanitize=address-Werror
 
-LFLAGS 		=	"-L$(shell brew --prefix readline)/lib" -lreadline 
+LFLAGS 		=	-L$(shell brew --prefix readline)/lib -lreadline
 
-HEADER		=	minishell.h
+HEADER		=	./inc/minishell.h \
+				./inc/header.h \
 
 LIBRARY		=	lib/libft.a
 
@@ -24,6 +24,8 @@ SRCS		=	main.c \
 				parse/tools/tokenizer_tools.c \
 				parse/lexical_analyzer/create_tokens.c \
 				parse/lexical_analyzer/parser.c \
+				parse/lexical_analyzer/form_cmdtable.c \
+				parse/lexical_analyzer/lst_creat_functions.c \
 				parse/lexical_analyzer/parsing_process.c \
 				exec/exec_cmd.c \
 				exec/tools.c \
@@ -31,9 +33,12 @@ SRCS		=	main.c \
 				exec/builtins.c \
 				exec/builtins2.c \
 				exec/builtins3.c \
-				exec/exuc_built.c \
+				exec/exec_built.c \
 				exec/pipe_line.c \
 				exec/toolsbuilts.c \
+				exec/toolsbuilts2.c \
+				exec/toolsbuilts3.c \
+				exec/exporttools.c \
 				exec/redirections.c \
 
 OBJS		= $(SRCS:.c=.o)
@@ -43,11 +48,11 @@ all : $(NAME)
 lib :
 	make -C lib
 
-$(NAME) : $(OBJS) lib
+$(NAME) : $(OBJS)  lib
 	@$(CC) $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) $(LFLAGS)
 
 %.o: %.c $(HEADER)
-		$(CC)  $(CFLAGS) -c $< -o $@
+		$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	make clean -C lib
@@ -59,10 +64,13 @@ fclean:	clean
 
 re: fclean all
 
-
 push: fclean
 	git add .
-	git commit -m "exec done, sig herdc left"
+	git commit -m "$(filter-out $@, $(MAKECMDGOALS))"
 	git push
+
+commit:
+	git add .
+	git commit -m "$(filter-out $@, $(MAKECMDGOALS))"
 
 .PHONY: clean fclean re lib

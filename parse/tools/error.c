@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   error.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: sahil <sahil@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 06:45:51 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/25 09:15:27 by kaafkhar         ###   ########.fr       */
+/*   Updated: 2024/11/03 06:03:20 by sahil            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,19 +14,35 @@
 
 void	del(void *content)
 {
-	free(content);
+	(void)content;
+	content = NULL;
 }
 
-void	put_error(t_args *cmd_line, char *msg, char *name)
+void	put_built_err(char *built, char *name, char *err)
 {
-	(void) cmd_line;
 	ft_putstr_fd("minionshell: "RED, 2);
-	ft_putstr_fd(msg, 2);
+	ft_putstr_fd(built, 2);
+	ft_putstr_fd(RESET, 2);
 	if (name)
 		ft_putstr_fd(name, 2);
+	ft_putstr_fd(err, 2);
+	ft_putstr_fd("\n", 2);
+	exit_code(EXIT_FAILURE, EDIT);
+}
+
+void	put_error(char *msg, char *name)
+{
+	ft_putstr_fd("minionshell: "RED, 2);
+	if (name)
+		ft_putstr_fd(name, 2);
+	ft_putstr_fd(msg, 2);
 	ft_putstr_fd("\n"RESET, 2);
-	g_errno = EXIT_FAILURE;
-	// printf("\n\n<<%d>>\n\n", g_errno);
+	if (ft_strncmp(msg, SYNTAX, 13) == 0)
+		exit_code(SYNTAX_ERROR, EDIT);
+	else if (ft_strncmp(msg, NOTFOUNDMSG, 24) == 0)
+		exit_code(BINARY_ERROR, EDIT);
+	else
+		exit_code(EXIT_FAILURE, EDIT);
 }
 
 bool	syntax_check(t_args *cmdline)
@@ -46,10 +62,10 @@ bool	syntax_check(t_args *cmdline)
 			free(next);
 			next = current->next;
 		}
-		if ((current->type < 5 && (!next || next->type < string))
+		if ((current->type < 5 && (!next || next->type < piipe))
 			|| (current->type == piipe && (current == cmdline->tokens
-					|| !next || next->type < string)))
-			return (put_error(cmdline, SYNTAX, NULL), false);
+					|| !next || next->type == piipe)))
+			return (false);
 		current = current->next;
 	}
 	return (true);

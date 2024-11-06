@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   tokenizer_tools.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: youssra <youssra@student.42.fr>            +#+  +:+       +#+        */
+/*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 06:26:12 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/07 00:04:48 by youssra          ###   ########.fr       */
+/*   Updated: 2024/11/04 06:11:22 by kaafkhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,24 +41,12 @@ int	strin_len(char *line)
 
 	i = 0;
 	len = 0;
-	if (line[i] == '$')
+	while (line[i] && !is_seperator(line[i])
+		&& line[i] != '\"' && line[i] != '\''
+		&& line[i] != ' ' && line[i] != '\t')
 	{
 		i++;
 		len++;
-		while (line[i] && (ft_isalnum(line[i]) || line[i] == '_'))
-		{
-			i++;
-			len++;
-		}
-	}
-	else
-	{
-		while (line[i] && !is_seperator(line[i]) && line[i] != '$'
-			&& line[i] != '\"' && line[i] != '\'' && line[i] != ' ')
-		{
-			i++;
-			len++;
-		}
 	}
 	return (len);
 }
@@ -84,8 +72,6 @@ int	word_len(char *line)
 			len++;
 		}
 	}
-	else if (line[i] == '$' && line[i + 1] == '?')
-		return (2);
 	else
 		return (strin_len(line));
 	return (len);
@@ -110,4 +96,16 @@ void	remove_q(t_token **lst)
 		}
 		tmp = tmp->next;
 	}
+}
+
+void	add_env_node(t_list **env, char *new_content)
+{
+	t_list	*new_node;
+
+	new_node = malloc(sizeof(t_list));
+	if (!new_node)
+		return ;
+	new_node->content = new_content;
+	new_node->next = *env;
+	*env = new_node;
 }

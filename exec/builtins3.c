@@ -3,117 +3,104 @@
 /*                                                        :::      ::::::::   */
 /*   builtins3.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kaafkhar <kaafkhar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/26 03:45:57 by kaafkhar          #+#    #+#             */
-/*   Updated: 2024/10/26 04:05:46 by kaafkhar         ###   ########.fr       */
+/*   Created: 2024/10/26 13:19:43 by kaafkhar          #+#    #+#             */
+/*   Updated: 2024/11/03 22:07:32 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	pwd(t_args *arg, char **cmd)
+int	is_seperator(char c)
 {
-	char	*cwd;
-
-	(void)arg;
-	(void)cmd;
-	cwd = getcwd(NULL, 0);
-	if (cwd == NULL)
-	{
-		perror("pwd");
-		g_errno = 1;
-		return (g_errno);
-	}
-	ft_putendl_fd(cwd, 1);
-	free(cwd);
-	g_errno = 0;
-	return (g_errno);
+	return (c == '|' || c == '<' || c == '>' );
 }
 
-void	exec_exit(t_args *args, t_cmd_tab *cmd)
+char	*envgetter(const char *key, t_list *env)
 {
-	(void)args;
-	if (cmd->arg && cmd->arg[0])
-	{
-		if (cmd->next)
-		{
-			printf("exit\nSHELL: exit: too many arguments\n");
-			g_errno = 1;
-		}
-		else if (is_num(cmd->arg))
-		{
-			printf("exit\n");
-			g_errno = ft_atoi(cmd->arg);
-			exit(g_errno);
-		}
-		else
-		{
-			printf("exit\nSHELL: exit: %s: numeric argument required\n",
-				cmd->arg);
-			g_errno = 255;
-			exit(g_errno);
-		}
-	}
-	exit(g_errno);
-}
-
-void	exec_env(t_cmd_tab *cmd, t_list *env)
-{
+	char	*value;
+	char	*lookup;
 	t_list	*tmp;
 
-	if (cmd->arg && ft_strcmp(cmd->arg, "|") != 0)
-	{
-		printf("env: %s: No such file or directory\n", cmd->arg);
-		g_errno = 127;
-		return ;
-	}
+	if (!key || !env)
+		return (NULL);
+	value = NULL;
+	lookup = ft_strjoin(key, "=");
 	tmp = env;
 	while (tmp)
 	{
-		printf("%s\n", (char *)tmp->content);
-		tmp = tmp->next;
-	}
-	g_errno = 0;
-}
-
-static void	remove_env_var(t_args *args, char *cmd)
-{
-	char		*env_var;
-	t_list		*prev;
-	t_list		*current;
-
-	prev = NULL;
-	current = args->env;
-	while (current)
-	{
-		env_var = (char *)current->content;
-		if (ft_strncmp(env_var, cmd, ft_strlen(cmd)) == 0
-			&& env_var[ft_strlen(cmd)] == '=')
+		if (ft_strncmp(lookup, tmp->content, ft_strlen(lookup)) == 0)
 		{
-			if (prev)
-				prev->next = current->next;
-			else
-				args->env = current->next;
-			free(current->content);
-			free(current);
+			value = ft_strdup(tmp->content + ft_strlen(lookup));
 			break ;
 		}
-		prev = current;
-		current = current->next;
+		tmp = tmp->next;
+	}
+	free(lookup);
+	return (value);
+}
+
+void	handle_envi(t_cmd_tab *table)
+{
+	t_list	*tmp;
+
+	tmp = table->data->env;
+	while (tmp)
+	{
+		if (ft_strncmp("PATH=", tmp->content, 5) == 0)
+			tmp = tmp->next;
+		else
+		{
+			ft_putendl_fd(tmp->content, STDOUT_FILENO);
+			tmp = tmp->next;
+		}
 	}
 }
 
-int	ft_unset(t_args *args, char **cmd)
+int	exec_env(t_cmd_tab *table, t_list *env, int flag)
+{
+	pid_t	pid;
+	int		status;
+
+	if (flag == SINGLE)
+		if (infile_opn(table) || outfile_opn(table))
+			return (1);
+	if (table->cmd[1])
+		return (put_built_err("env: ", NULL, "no argumets/options !!"), 1);
+	if (table->data->env_i == true)
+		handle_envi(table);
+	else
+	{
+		pid = fork();
+		if (pid == -1)
+			return (put_error(FORKMSG, NULL), 1);
+		if (pid == 0)
+			if (exec(table, env) == -1)
+				return (put_error(NOTFOUNDMSG, "env"), exit(BINARY_ERROR), 127);
+		waitpid(pid, &status, 0);
+		if (WIFEXITED(status))
+			return (exit_code(WEXITSTATUS(status), EDIT));
+	}
+	return (exit_code(EXIT_SUCCESS, EDIT));
+}
+
+int	ft_unset(t_args *args, char **cmd, int flag)
 {
 	int	i;
 
 	i = 1;
+	exit_code(EXIT_SUCCESS, EDIT);
+	if (flag == SINGLE)
+		if (infile_opn(args->table) || outfile_opn(args->table))
+			return (1);
 	while (cmd[i])
 	{
-		remove_env_var(args, cmd[i]);
+		if (!is_valid(cmd[i]))
+			put_built_err("unset: ", cmd[i], NOTVALID);
+		else
+			remove_env_var(args, cmd[i]);
 		i++;
 	}
-	g_errno = 0;
-	return (0);
+	return (exit_code(0, RETRIEVE));
 }

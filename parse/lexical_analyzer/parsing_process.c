@@ -6,41 +6,11 @@
 /*   By: ychagri <ychagri@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 23:59:55 by ychagri           #+#    #+#             */
-/*   Updated: 2024/10/24 19:09:12 by ychagri          ###   ########.fr       */
+/*   Updated: 2024/11/03 23:03:21 by ychagri          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-t_cmd_tab	*new_tab(void)
-{
-	t_cmd_tab	*new;
-
-	new = malloc(sizeof(t_cmd_tab));
-	if (!new)
-		return (NULL);
-	ft_bzero(new, sizeof(t_cmd_tab));
-	return (new);
-}
-
-void	table_add_back(t_cmd_tab **head, t_cmd_tab *new)
-{
-	t_cmd_tab	*tmp;
-	t_cmd_tab	*prev;
-
-	tmp = *head;
-	if (*head == NULL)
-	{
-		*head = new;
-		return ;
-	}
-	while (tmp)
-	{
-		prev = tmp;
-		tmp = tmp->next;
-	}
-	prev->next = new;
-}
 
 int	heredoc_check(t_token *token)
 {
@@ -71,49 +41,69 @@ int	heredoc_check(t_token *token)
 	return (0);
 }
 
-int	process_line(t_args *cmdline)
+char	*remove_quotes(char *str, int c)
 {
-	char		*tmp;
+	char	*update;
+	int		len;
+	int		j;
+	int		i;
+
+	i = -1;
+	len = 0;
+	while (str[++i])
+		if (str[i] != c)
+			len++;
+	update = malloc((len + 1) * sizeof(char));
+	i = -1;
+	j = -1;
+	while (str[++i])
+	{
+		if (str[i] != c)
+			update[++j] = str[i];
+	}
+	update[++j] = '\0';
+	free(str);
+	return (update);
+}
+
+int	check_nd_fill(t_args *cmdline)
+{
 	t_cmd_tab	*tab;
 
-	tmp = ft_strdup(cmdline->line);
-	if (!*tmp)
-		return (free(tmp), g_errno = EXIT_SUCCESS, 1);
-	if (!words_list(tmp, cmdline))
-	{
-		if (heredoc_check(cmdline->tokens))
-		{
-			free(tmp);
-			if (dup2(cmdline->fdin, STDIN_FILENO) == -1)
-          		return (put_error(cmdline, "dup2 error on fdin", NULL), free_struct(cmdline), 1);
-			return (g_errno = 1, 1);
-		}
-	}
-	free(tmp);
 	remove_q(&cmdline->tokens);
 	if (!syntax_check(cmdline))
 	{
-		if (heredoc_check(cmdline->tokens))
-		{
-			if (dup2(cmdline->fdin, STDIN_FILENO) == -1)
-          		return (put_error(cmdline, "dup2 error on fdin", NULL), free_struct(cmdline), 1);
-			return (g_errno = 1, 1);
-		}
+		put_error(SYNTAX, NULL);
+		return (1);
 	}
 	expand_var(&cmdline);
 	command_table(cmdline);
 	tab = cmdline->table;
 	while (tab)
 	{
-		tab->cmd = ft_split(tab->arg, '\n');
-		free(tab->arg);
-		tab->arg = NULL;
+		if (tab->arg)
+			tab->cmd = lst_to_array(tab->arg);
 		tab = tab->next;
 	}
-	if (ft_heredoc(&cmdline->table))
+	return (0);
+}
+
+int	process_line(t_args *cmdline)
+{
+	char		*tmp;
+
+	tmp = ft_strdup(cmdline->line);
+	if (!*tmp)
+		return (free(tmp), exit_code(EXIT_SUCCESS, EDIT), 1);
+	if (!words_list(tmp, cmdline))
 	{
-		if (dup2(cmdline->fdin, STDIN_FILENO) == -1)
-           return (put_error(cmdline, "dup2 error on fdin", NULL), free_struct(cmdline), 1);
+		free(tmp);
+		return (1);
 	}
-	return (g_errno = 0, 0);
+	free(tmp);
+	if (check_nd_fill(cmdline))
+		return (1);
+	if (ft_heredoc(&cmdline->table))
+		return (1);
+	return (0);
 }
