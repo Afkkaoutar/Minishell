@@ -97,7 +97,7 @@ int	export_variable(t_args *args, t_cmd_tab *cmd, int flag)
 {
 	char	*find_sign;
 	char	*variable;
-	int		result;
+	// int		result;
 	int		i;
 
 	i = 1;
@@ -115,7 +115,7 @@ int	export_variable(t_args *args, t_cmd_tab *cmd, int flag)
 		if (!variable || !is_valid(variable))
 			put_built_err("export: ", variable, NOTVALID);
 		else
-			result = updates(cmd, variable, find_sign, i);
+			updates(cmd, variable, find_sign, i);
 		free(variable);
 		i++;
 	}

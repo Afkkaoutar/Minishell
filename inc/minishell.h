@@ -13,6 +13,7 @@
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
+# include <stdio.h>
 # include <readline/rltypedefs.h>
 # include "../lib/Libft/libft.h"
 # include <readline/readline.h>
@@ -28,7 +29,6 @@
 # include "header.h"
 # include "limits.h"
 # include <fcntl.h>
-# include <stdio.h>
 
 extern int	g_errno;
 

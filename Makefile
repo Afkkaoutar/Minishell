@@ -1,15 +1,11 @@
-
 NAME 		=	minishell
 
 CC			=	cc
-
 CFLAGS		=	-g -Wall -Wextra -Werror -I./inc -I$(shell brew --prefix readline)/include  
-#-fsanitize=address-Werror
-
 LFLAGS 		=	-L$(shell brew --prefix readline)/lib -lreadline
 
 HEADER		=	./inc/minishell.h \
-				./inc/header.h \
+				./inc/header.h
 
 LIBRARY		=	lib/libft.a
 
@@ -48,17 +44,17 @@ all : $(NAME)
 lib :
 	make -C lib
 
-$(NAME) : $(OBJS)  lib
+$(NAME) : $(OBJS) lib
 	@$(CC) $(CFLAGS) $(OBJS) $(LIBRARY) -o $(NAME) $(LFLAGS)
 
 %.o: %.c $(HEADER)
-		$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	make clean -C lib
 	rm -rf $(OBJS)
 
-fclean:	clean
+fclean: clean
 	make fclean -C lib
 	rm -rf $(NAME)
 
