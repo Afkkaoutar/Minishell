@@ -1,4 +1,4 @@
-# 🐚 MINISHELL - 42
+# MINISHELL - 42
 
 Ce projet a été réalisé par deux personnes et divisé en deux parties :
 
